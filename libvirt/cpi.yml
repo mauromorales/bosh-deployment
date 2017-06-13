@@ -1,0 +1,55 @@
+---
+- type: replace
+  path: /releases/-
+  value:
+    name: bosh-libvirt-cpi
+    version: latest
+    url: file:///tmp/bosh-libvirt-cpi-release.tgz
+
+- type: replace
+  path: /resource_pools/name=vms/stemcell?
+  value:
+    url: https://bosh.io/d/stemcells/bosh-openstack-kvm-ubuntu-trusty-go_agent?v=3363.20
+    sha1: bc8096c0d817b407aed15af487bd6d5f4ad069f7
+
+# Configure sizes
+- type: replace
+  path: /resource_pools/name=vms/cloud_properties?
+  value:
+    cpus: 2
+    memory: 4096
+    ephemeral_disk: 16_384
+
+# Add CPI job
+- type: replace
+  path: /instance_groups/name=bosh/jobs/-
+  value: &cpi_job
+    name: libvirt_cpi
+    release: bosh-libvirt-cpi
+
+- type: replace
+  path: /instance_groups/name=bosh/properties/director/cpi_job?
+  value: libvirt_cpi
+
+- type: replace
+  path: /cloud_provider/template?
+  value: *cpi_job
+
+- type: replace
+  path: /instance_groups/name=bosh/properties/libvirt?
+  value: &libvirt
+    host: ((libvirt_host))
+    pool_name: ((libvirt_pool_name))
+
+- type: replace
+  path: /cloud_provider/ssh_tunnel?
+  value:
+    host: ((internal_ip))
+    port: 22
+    user: vcap
+    private_key: ((private_key))
+
+- type: replace
+  path: /cloud_provider/properties/libvirt?
+  value: *libvirt
+
